@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 ARCH:=mips
 BOARD:=realtek
 BOARDNAME:=Realtek
-SUBTARGETS:=rtl8197d rtl8196e rtl8197f
+SUBTARGETS:=rtl8197d rtl8196e rtl8197f rtl8198 rtl8198c
 FEATURES:=squashfs gpio
 MAINTAINER:=Anlix <contato@anlix.io>
 
