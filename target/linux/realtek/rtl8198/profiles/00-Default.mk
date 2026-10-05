@@ -11,3 +11,17 @@ define Profile/Default/Description
 endef
 
 $(eval $(call Profile,Default))
+
+define Profile/KT510
+  NAME:=KT510 (RTL8198 + RTL8192ER + RTL8812AR, 16 MiB)
+  PACKAGES:=-wpad-mini
+endef
+
+define Profile/KT510/Description
+  KT510 board: Realtek RTL8198, RTL8192ER 2.4 GHz PCIe radio,
+  RTL8812AR 5 GHz PCIe radio, 16 MiB SPI-NOR flash.
+  Factory image support remains gated on the verified RTL8198 board
+  loader/header/GPIO/PCIe definitions.
+endef
+
+$(eval $(call Profile,KT510))
