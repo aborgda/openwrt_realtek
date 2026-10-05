@@ -4,6 +4,8 @@ on:
   push:
     branches: ["sk337-gn866-rtl8198c"]
   workflow_dispatch:
+  pull_request:
+    branches: ["sk337-gn866-rtl8198c"]
 
 jobs:
   build:
