@@ -14,6 +14,8 @@ File: GD25Q128B@WSON8_20251203_145317(1).BIN
 
 Observed size: 16,777,216 bytes (0x1000000), matching a 128-Mbit / 16-MiB SPI-NOR.
 
+SHA-256: c12820ff9ed8c90bbe0ad6d21f59813171988b7a65f560786757d74e4bcdc955
+
 Observed SquashFS signatures:
 - 0x00411000
 - 0x00811000
