@@ -28,7 +28,7 @@ jobs:
           tar -xzf rtl819x-sdk.tar.gz -C sdk --strip-components=1
           test -f sdk/Makefile
 
-      - name: Select RTL8198 configuration
+      - name: Inspect RTL8198 SDK targets
         shell: bash
         run: |
           set -euxo pipefail
@@ -36,14 +36,24 @@ jobs:
           export TERM=xterm
           echo "Available RTL8198 config targets:"
           make help 2>/dev/null | grep -i '8198' || true
-          find . -maxdepth 3 -type f \( -name '*defconfig*' -o -name '*8198*config*' \) -print | sort | tee ../rtl8198-config-files.txt
+          find . -maxdepth 4 -type f             \( -name '*defconfig*' -o -name '*8198*config*' \)             -print | sort | tee ../rtl8198-config-files.txt
+          grep -RniE 'RTL_8198(_GW|_AP_ROOT)?|rtl8198'             Makefile rtk_deconfig target 2>/dev/null | head -200 || true
+
+      - name: Select RTL8198 configuration
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd sdk
+          export TERM=xterm
           target=''
-          for t in defconfig_rtl8198 defconfig_rtl8198_gw defconfig_rtl8198_ap defconfig_rtl8198_aproot; do
-            if make -n "$t" >/dev/null 2>&1; then target="$t"; break; fi
+          for t in defconfig_rtl8198 defconfig_rtl8198_gw                    defconfig_rtl8198_ap defconfig_rtl8198_aproot; do
+            if make -n "$t" >/dev/null 2>&1; then
+              target="$t"
+              break
+            fi
           done
           if [ -z "$target" ]; then
             echo "No RTL8198 defconfig target was found in this SDK." >&2
-            grep -RniE 'RTL_8198(_GW|_AP_ROOT)?|rtl8198' Makefile rtk_deconfig target 2>/dev/null | head -200 || true
             exit 1
           fi
           echo "Using $target"
