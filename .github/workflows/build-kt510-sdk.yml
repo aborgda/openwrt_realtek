@@ -1,0 +1,75 @@
+name: Build KT510 RTL8198 vendor SDK
+
+on:
+  push:
+    branches: ["sk337-gn866-rtl8198c"]
+  workflow_dispatch:
+
+jobs:
+  build-kt510:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install vendor SDK build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc g++ make bc bison flex             libncurses5-dev libncursesw5-dev unzip zip cpio rsync             wget curl file python3 perl patch xz-utils tar gzip
+
+      - name: Download RTL819X SDK 3.4.9.3
+        shell: bash
+        run: |
+          set -euxo pipefail
+          wget -O rtl819x-sdk.tar.gz             'https://downloads.sourceforge.net/project/rtl819x/rtl819x-SDK-v3.4.9.3-full-package-2.tar.gz'
+          test -s rtl819x-sdk.tar.gz
+          tar -tzf rtl819x-sdk.tar.gz >/dev/null
+          mkdir sdk
+          tar -xzf rtl819x-sdk.tar.gz -C sdk --strip-components=1
+          test -f sdk/Makefile
+
+      - name: Select RTL8198 configuration
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd sdk
+          export TERM=xterm
+          echo "Available RTL8198 config targets:"
+          make help 2>/dev/null | grep -i '8198' || true
+          find . -maxdepth 3 -type f \( -name '*defconfig*' -o -name '*8198*config*' \) -print | sort | tee ../rtl8198-config-files.txt
+          target=''
+          for t in defconfig_rtl8198 defconfig_rtl8198_gw defconfig_rtl8198_ap defconfig_rtl8198_aproot; do
+            if make -n "$t" >/dev/null 2>&1; then target="$t"; break; fi
+          done
+          if [ -z "$target" ]; then
+            echo "No RTL8198 defconfig target was found in this SDK." >&2
+            grep -RniE 'RTL_8198(_GW|_AP_ROOT)?|rtl8198' Makefile rtk_deconfig target 2>/dev/null | head -200 || true
+            exit 1
+          fi
+          echo "Using $target"
+          make "$target"
+          test -s .config
+          grep -E 'CONFIG_RTL_8198(=|_GW=|_AP_ROOT=)|CONFIG_RTL8198(=| )' .config || true
+          cp .config ../kt510-sdk.config
+
+      - name: Build vendor firmware
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd sdk
+          export TERM=xterm
+          make -j2 V=1
+
+      - name: Collect KT510 candidate images and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kt510-rtl8198-vendor-build
+          path: |
+            sdk/bin/**
+            sdk/images/**
+            sdk/target/**/image/**
+            sdk/*.log
+            rtl8198-config-files.txt
+            kt510-sdk.config
+          if-no-files-found: warn
