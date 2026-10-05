@@ -5,7 +5,6 @@ on:
     branches: ["sk337-gn866-rtl8198c"]
   workflow_dispatch:
   pull_request:
-    branches: ["sk337-gn866-rtl8198c"]
 
 jobs:
   build:
@@ -34,16 +33,17 @@ jobs:
 CONFIG_TARGET_realtek=y
 CONFIG_TARGET_realtek_rtl8198c=y
 CONFIG_TARGET_BOARD="realtek"
-CONFIG_TARGET_ARCH_PACKAGES="realtek_lx53"
 CONFIG_PACKAGE_kmod-mac80211=y
 CONFIG_PACKAGE_wpad-basic-mbedtls=y
 CONFIG_PACKAGE_uci=y
 CONFIG_PACKAGE_netifd=y
 EOF
           make defconfig
+          grep -E '^(CONFIG_TARGET_realtek|CONFIG_TARGET_realtek_rtl8198c|CONFIG_CPU_TYPE|CONFIG_TARGET_ARCH_PACKAGES)=' .config
           make -j2 target/linux/compile
           make -j2 target/linux/install
           make -j2 target/linux/image/compile
+
       - name: Collect images
         uses: actions/upload-artifact@v4
         with:
@@ -53,3 +53,20 @@ EOF
             openwrt/bin/targets/realtek/rtl8198c/**/*SK337*
             openwrt/bin/targets/realtek/rtl8198c/**/*GN866*
           if-no-files-found: warn
+
+  kt510-validation:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate KT510 board definition
+        shell: bash
+        run: |
+          set -euxo pipefail
+          test -f target/linux/realtek/rtl8198/profiles/00-Default.mk
+          grep -q 'Profile/KT510' target/linux/realtek/rtl8198/profiles/00-Default.mk
+          grep -q 'RTL8198 + RTL8192ER + RTL8812AR' target/linux/realtek/rtl8198/profiles/00-Default.mk
+          grep -q '16 MiB' target/linux/realtek/rtl8198/profiles/00-Default.mk
+          test -f board-overlay/KT510_DUMP_NOTES.md
+          echo "KT510 profile/metadata validation passed."
+          echo "A factory KT510 image is intentionally not generated until a verified RTL8198 BSP/loader/header is available."
