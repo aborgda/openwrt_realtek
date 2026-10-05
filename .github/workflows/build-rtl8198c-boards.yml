@@ -21,11 +21,25 @@ jobs:
           git clone --depth=1 --branch 8198c https://github.com/plappermaul/openwrt.git openwrt
           cp board-overlay/rtl8198c_SK337.dts openwrt/target/linux/realtek/dts-5.10/
           cp board-overlay/rtl8198c_GN866.dts openwrt/target/linux/realtek/dts-5.10/
+          mkdir -p openwrt/files/etc/config openwrt/files/etc/uci-defaults
+          cp board-overlay/etc/config/wireless openwrt/files/etc/config/wireless
+          cp board-overlay/etc/uci-defaults/99-sk337-gn866-wlan openwrt/files/etc/uci-defaults/99-sk337-gn866-wlan
+          chmod +x openwrt/files/etc/uci-defaults/99-sk337-gn866-wlan
           cat board-overlay/rtl8198c-boards.mk >> openwrt/target/linux/realtek/image/rtl8198c.mk
           sed -i 's/# TARGET_DEVICES += f-secure_sense/TARGET_DEVICES += f-secure_sense/' openwrt/target/linux/realtek/image/rtl8198c.mk || true
           cd openwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+          cat > .config <<'EOF'
+CONFIG_TARGET_realtek=y
+CONFIG_TARGET_realtek_rtl8198c=y
+CONFIG_TARGET_BOARD="realtek"
+CONFIG_TARGET_ARCH_PACKAGES="realtek_lx53"
+CONFIG_PACKAGE_kmod-mac80211=y
+CONFIG_PACKAGE_wpad-basic-mbedtls=y
+CONFIG_PACKAGE_uci=y
+CONFIG_PACKAGE_netifd=y
+EOF
           make defconfig
           make -j2 target/linux/compile
           make -j2 target/linux/install
