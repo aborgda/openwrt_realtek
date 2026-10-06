@@ -45,7 +45,9 @@ jobs:
           python3 - <<'PY'
           p = "build_dir/host/m4-1.4.18/lib/c-stack.c"
           s = open(p).read()
-          s = s.replace("SIGSTKSZ", "16384")
+          start = s.index("#ifndef SIGSTKSZ")
+          end = s.index("#endif", start) + len("#endif")
+          s = s[:start] + "#undef SIGSTKSZ\\n#define SIGSTKSZ 16384" + s[end:]
           open(p, "w").write(s)
           PY
           make -j2 V=s tools/install
