@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+/* KT510 build verification: keep DTS in the legacy MIPS dts root. */
 /dts-v1/;
 
 #include "rtl819x.dtsi"
