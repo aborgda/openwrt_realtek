@@ -25,7 +25,7 @@
 			status = "okay";
 		};
 
-		spi0: spi@1200 {
+		spi@1200 {
 			status = "okay";
 
 			flash@0 {
