@@ -52,3 +52,5 @@ jobs:
           path: |
             bin/targets/realtek/rtl8198c/**
           if-no-files-found: error
+
+# CI: force a fresh build after target integration.
