@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-kt510:
-    timeout-minutes: 25
+    timeout-minutes: 30
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -42,7 +42,7 @@ jobs:
 
       - name: Build RTL8198 kernel and image
         run: |
-          make -j2 V=s tools/m4/prepare
+          timeout 5m make -j1 V=s tools/m4/prepare
           python3 - <<'PY'
           p = "build_dir/host/m4-1.4.18/lib/c-stack.c"
           s = open(p).read()
@@ -55,11 +55,11 @@ jobs:
           # These are the known non-null malloc/realloc probes; cache them for the host build.
           export ac_cv_func_malloc_0_nonnull=yes
           export ac_cv_func_realloc_0_nonnull=yes
-          make -j2 V=s tools/install
-          make -j2 V=s toolchain/install
-          make FORCE=1 -j1 V=s target/linux/compile
-          make FORCE=1 -j1 V=s target/linux/install
-          make FORCE=1 -j1 V=s target/linux/image/compile
+          timeout 10m make -j1 V=s tools/install
+          timeout 15m make -j1 V=s toolchain/install
+          timeout 10m make FORCE=1 -j1 V=s target/linux/compile
+          timeout 10m make FORCE=1 -j1 V=s target/linux/install
+          timeout 10m make FORCE=1 -j1 V=s target/linux/image/compile
 
       - name: Verify KT510 image
         run: |
