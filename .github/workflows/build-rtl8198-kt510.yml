@@ -1,0 +1,57 @@
+name: Build RTL8198 KT510
+
+on:
+  push:
+    branches: ["kt510-rtl8198"]
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  build-kt510:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang flex bison gawk gettext             libncurses5-dev libncursesw5-dev libssl-dev python3 python3-distutils             rsync unzip file wget git
+
+      - name: Prepare feeds
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Configure KT510
+        run: |
+          cat > .config <<'EOF'
+          CONFIG_TARGET_realtek=y
+          CONFIG_TARGET_realtek_rtl8198=y
+          CONFIG_TARGET_BOARD="realtek"
+          CONFIG_TARGET_ARCH_PACKAGES="realtek_lx53"
+          CONFIG_CPU_TYPE="lx53"
+          CONFIG_TARGET_OPTIMIZATION="-Os -pipe -fno-caller-saves -fno-plt -fhonour-copts"
+          CONFIG_PACKAGE_kmod-gpio-button-hotplug=y
+          CONFIG_PACKAGE_swconfig=y
+          EOF
+          make defconfig
+          grep -E '^(CONFIG_TARGET_realtek|CONFIG_TARGET_realtek_rtl8198|CONFIG_CPU_TYPE|CONFIG_TARGET_ARCH_PACKAGES|CONFIG_SOC_RTL8198)=' .config
+
+      - name: Build RTL8198 kernel and image
+        run: |
+          make -j2 target/linux/compile
+          make -j2 target/linux/install
+          make -j2 target/linux/image/compile
+
+      - name: Verify KT510 image
+        run: |
+          find bin/targets/realtek/rtl8198 -maxdepth 2 -type f -print
+          test -n "$(find bin/targets/realtek/rtl8198 -type f -name '*KT510*' -o -name 'factory.bin' | head -1)"
+
+      - name: Upload KT510 images
+        uses: actions/upload-artifact@v4
+        with:
+          name: kt510-rtl8198
+          path: bin/targets/realtek/rtl8198/*
+          if-no-files-found: error
