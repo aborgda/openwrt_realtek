@@ -1,9 +1,13 @@
 # SPDX-License-Identifier: GPL-2.0-only
+# GN866 AC legacy build integration
+# GN866 build verification requested 2026-10-06
+ARCH:=mips
 SUBTARGET:=rtl8198c
-BOARDNAME:=RTL8198C based boards
-ARCH_PACKAGES:=realtek_lx53
-CPU_TYPE:=lx53
+CPU_TYPE:=24kc
+BOARD:=realtek
+BOARDNAME:=Realtek MIPS RTL8198C
+KERNEL_PATCHVER:=3.10.24
 
 define Target/Description
-        Build firmware images for Realtek RTL8198C based boards (GN866 AC).
+  Build firmware images for Realtek RTL8198C + RTL8192ER + RTL8812BRH legacy boards.
 endef

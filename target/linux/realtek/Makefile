@@ -14,6 +14,9 @@ FEATURES:=squashfs gpio
 MAINTAINER:=Anlix <contato@anlix.io>
 
 KERNEL_PATCHVER:=5.4
+ifeq ($(CONFIG_TARGET_realtek_rtl8198c),y)
+KERNEL_PATCHVER:=3.10.24
+endif
 
 define Target/Description
 	Build firmware images for Realtek based boards.

@@ -1,0 +1,16 @@
+/dts-v1/;
+/*
+ * RTL8198C GN866 AC board description.
+ * Legacy board code remains authoritative; this DTS records the verified
+ * GPIO map for tooling and future DT migration.
+ */
+/ {
+    compatible = "realtek,rtl8198c-gn866-ac";
+    model = "GN866 AC";
+    gpio-map {
+        wps-led = <7>;
+        reset-button = <5>;
+        wps-button = <6>;
+        reset-e7 = <0x27>;
+    };
+};

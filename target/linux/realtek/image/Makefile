@@ -332,4 +332,24 @@ define Image/Build/Initramfs
         $(call Image/Build/Profile/$(PROFILE),initramfs)
 endef
 
+
+# Legacy RTL8198C CR6C/R6CR firmware container.
+define Build/rtk-cr6c
+	$(TOPDIR)/target/linux/realtek/image/rtk-cr6c.py \
+		$@ $(KDIR)/root.squashfs $@.new
+	mv $@.new $@
+endef
+
+ifeq ($(SUBTARGET),rtl8198c)
+define Device/rtl8198c_gn866_ac
+  DEVICE_VENDOR := Realtek
+  DEVICE_MODEL := GN866 AC
+  DEVICE_DTS := rtl8198c_gn866_ac
+  DEVICE_PACKAGES := kmod-gpio-button-hotplug
+  IMAGES := fw.bin
+  IMAGE/fw.bin := append-kernel | lzma | rtk-cr6c
+endef
+TARGET_DEVICES += rtl8198c_gn866_ac
+endif
+
 $(eval $(call BuildImage))

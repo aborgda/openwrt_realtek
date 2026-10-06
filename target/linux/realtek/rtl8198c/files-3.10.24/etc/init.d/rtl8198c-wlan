@@ -1,0 +1,13 @@
+#!/bin/sh /etc/rc.common
+START=15
+USE_PROCD=0
+start() {
+    for i in wlan0 wlan1; do
+        [ -d /sys/class/net/$i ] && ifconfig "$i" up 2>/dev/null || true
+    done
+}
+stop() {
+    for i in wlan0 wlan1; do
+        [ -d /sys/class/net/$i ] && ifconfig "$i" down 2>/dev/null || true
+    done
+}
