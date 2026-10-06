@@ -1,0 +1,31 @@
+--- a/lib/c-stack.c
++++ b/lib/c-stack.c
+@@ -50,13 +50,16 @@
+ #if ! HAVE_STACK_T && ! defined stack_t
+ typedef struct sigaltstack stack_t;
+ #endif
+-#ifndef SIGSTKSZ
+-# define SIGSTKSZ 16384
+-#elif HAVE_LIBSIGSEGV && SIGSTKSZ < 16384
++
++/* SIGSTKSZ may be a run-time expression with glibc 2.34+.  Do not
++   use it in preprocessor expressions or as a static array bound. */
++#define get_sigstksz() (16384)
++#if HAVE_LIBSIGSEGV
+ /* libsigsegv 2.6 through 2.8 have a bug where some architectures use
+    more than the Linux default of an 8k alternate stack when deciding
+    if a fault was caused by stack overflow.  */
+-# undef SIGSTKSZ
+-# define SIGSTKSZ 16384
++# undef get_sigstksz
++# define get_sigstksz() ((SIGSTKSZ) < 16384 ? 16384 : (SIGSTKSZ))
+ #endif
+@@ -131,7 +134,7 @@
+ /* Storage for the alternate signal stack. */
+ static union
+ {
+-  char buffer[SIGSTKSZ];
++  char buffer[16384];
+ 
+   /* These other members are for proper alignment. */
+   long double ld;
