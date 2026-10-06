@@ -24,13 +24,14 @@ const char *get_system_type(void)
 #ifdef CONFIG_SOC_RTL8196E
 	return "Realtek RTL8196E";
 #endif
-
 #ifdef CONFIG_SOC_RTL8197D
 	return "Realtek RTL8197D";
 #endif
-
 #ifdef CONFIG_SOC_RTL8197F
 	return "Realtek RTL8197F";
+#endif
+#ifdef CONFIG_SOC_RTL8198
+	return "Realtek RTL8198";
 #endif
 }
 
@@ -46,12 +47,8 @@ static inline void wait_instruction(void)
 
 void realtek_machine_restart(char *command)
 {
-	/* Disable all interrupts */
 	local_irq_disable();
-
-	/* Use watchdog to reset the system */
 	sr_w32(0x00, REALTEK_WATCHDOG_TIMER_REG);
-
 	for (;;)
 		wait_instruction();
 }
@@ -72,21 +69,15 @@ void realtek_halt(void)
 void __init plat_mem_setup(void)
 {
 	void *dtb = NULL;
-
 	_machine_restart = realtek_machine_restart;
 	_machine_halt = realtek_halt;
-
 #ifndef CONFIG_SOC_RTL8197F
-	// 8197F uses the r4k wait
 	cpu_wait = realtek_wait;
 #endif
-
-	// Initialize DTB
 	if (fw_passed_dtb)
 		dtb = (void *)fw_passed_dtb;
 	else if (__dtb_start != __dtb_end)
 		dtb = (void *)__dtb_start;
-
 	__dt_setup_arch(dtb);
 }
 
@@ -96,26 +87,18 @@ void __init device_tree_init(void)
 {
 	struct device_node *np;
 	struct resource res;
-
 	unflatten_and_copy_device_tree();
-
 	np = of_find_compatible_node(NULL, NULL, "realtek,rtl819x-sysc");
 	if (!np)
 		panic("Failed to find realtek,rtl819x-sysc node");
-
 	if (of_address_to_resource(np, 0, &res))
-		panic("Failed to get resource for realtek,rtl819x-sysc");
-
+		panic("Failed to get resource for rtl819x-sysc");
 	_sys_membase = ioremap_nocache(res.start, resource_size(&res));
 	if(!_sys_membase)
 		panic("Failed to map memory for rtl819x-sysc");
-
 	pr_info("BOOTSTRAP = %x %x %x %x\n", sr_r32(0x00), sr_r32(0x04), sr_r32(0x08), sr_r32(0x10));
-
 #ifdef CONFIG_SOC_RTL8197D
-	/* Voodoo from SDK */
-	if((sr_r32(0x00)&0xf)<3)
-	{
+	if((sr_r32(0x00)&0xf)<3) {
 		sr_w32((sr_r32(0x88) & ( ~(3<<5)&~(0xF<<0))), 0x88);
 		sr_w32((sr_r32(0x88)|(1<<4)), 0x88);
 		sr_w32(sr_r32(0x88) & (~(3<<7)), 0x88);
@@ -128,4 +111,3 @@ void __init plat_time_init(void)
 	of_clk_init(NULL);
 	timer_probe();
 }
-
