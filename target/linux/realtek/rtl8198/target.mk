@@ -2,7 +2,7 @@
 SUBTARGET:=rtl8198
 BOARDNAME:=RTL8198 based boards
 ARCH_PACKAGES:=realtek_lx53
-CPU_TYPE:=lx5380
+CPU_TYPE:=lx53
 
 define Target/Description
 	Build firmware images for Realtek RTL8198 based boards.
