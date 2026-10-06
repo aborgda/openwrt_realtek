@@ -341,19 +341,43 @@ define Build/rtk-cr6c
 endef
 
 ifeq ($(SUBTARGET),rtl8198c)
-define Device/rtl8198c_gn866_ac
-  DEVICE_VENDOR := Realtek
-  DEVICE_MODEL := GN866 AC
-  DEVICE_DTS := rtl8198c_gn866_ac
-  DEVICE_PACKAGES := kmod-gpio-button-hotplug
+
+define Device/RTL8198C_LEGACY
+  $(Device/RealtekDTS)
+  BLOCKSIZE := 64k
+  KERNEL := kernel-bin | append-dtb | lzma
+  CVIMG_LOADER_START_ADDR := 0x80A00000
   IMAGES := fw.bin
-  IMAGE/fw.bin := append-kernel | lzma | rtk-cr6c
+  IMAGE/fw.bin := append-kernel | rtk-cr6c
+endef
+
+define Device/GN866_AC
+  $(Device/RTL8198C_LEGACY)
+  DEVICE_DTS := rtl8198c-gn866-ac
+  DEVICE_TITLE := GN866 AC (RTL8198C + RTL8192ER + RTL8812BRH)
+  SUPPORTED_DEVICES := gn866-ac
+  DEV_PROFILE := GN866_AC
+  IMAGE_SIZE := 15872k
+endef
+TARGET_DEVICES += GN866_AC
+
+define Device/SK337
+  $(Device/RTL8198C_LEGACY)
+  DEVICE_DTS := rtl8198c-sk337
+  DEVICE_TITLE := SK337 (RTL8198C + RTL8192E + RTL8812AR)
+  SUPPORTED_DEVICES := sk337
+  DEV_PROFILE := SK337
+  IMAGE_SIZE := 32256k
+endef
+TARGET_DEVICES += SK337
+
+define Device/rtl8198c_gn866_ac
+  $(Device/GN866_AC)
 endef
 TARGET_DEVICES += rtl8198c_gn866_ac
 endif
 
-
-# KT510 RTL8198 factory layout:
+# KT510 RTL8198 factory layout:# KT510 RTL8198 factory layout:
 # 16 MiB SPI-NOR, cr6c kernel at 0x11000, raw hsqs rootfs at 0x411000.
 define Build/kt510-factory
 	python3 $(TOPDIR)/target/linux/realtek/image/kt510-pack.py \
