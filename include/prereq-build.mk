@@ -28,7 +28,7 @@ $(eval $(call TestHostCommand,proper-umask, \
 
 $(eval $(call SetupHostCommand,gcc, \
 	Please install the GNU C Compiler (gcc) 4.8 or later, \
-	$(CC) -dumpversion | grep -E '^(4\.[8-9]|[5-9]\.?|10\.?)', \
+	$(CC) -dumpversion | grep -E '^(4\.[8-9]|[5-9]\.?|10\.?|1[1-9]\.?|[2-9][0-9]\.)', \
 	gcc -dumpversion | grep -E '^(4\.[8-9]|[5-9]\.?|10\.?)', \
 	gcc --version | grep -E 'Apple.(LLVM|clang)' ))
 
@@ -144,7 +144,7 @@ $(eval $(call SetupHostCommand,python,Please install Python >= 3.5, \
 	python3.7 -V 2>&1 | grep 'Python 3', \
 	python3.6 -V 2>&1 | grep 'Python 3', \
 	python3.5 -V 2>&1 | grep 'Python 3', \
-	python3 -V 2>&1 | grep -E 'Python 3\.[5-9]\.?'))
+	python3 -V 2>&1 | grep -E 'Python 3\.[5-9]([0-9])?\.?|Python 3\.[1-9][0-9]\.?'))
 
 $(eval $(call SetupHostCommand,python3,Please install Python >= 3.5, \
 	python3.8 -V 2>&1 | grep 'Python 3', \
