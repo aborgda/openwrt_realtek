@@ -8,6 +8,7 @@ on:
 
 jobs:
   build-kt510:
+    timeout-minutes: 25
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -50,6 +51,10 @@ jobs:
           s = s[:start] + "#undef SIGSTKSZ\n#define SIGSTKSZ 16384" + s[end:]
           open(p, "w").write(s)
           PY
+          # Old binutils 2.34 runs host configure tests that can hang on modern runners.
+          # These are the known non-null malloc/realloc probes; cache them for the host build.
+          export ac_cv_func_malloc_0_nonnull=yes
+          export ac_cv_func_realloc_0_nonnull=yes
           make -j2 V=s tools/install
           make -j2 V=s toolchain/install
           make FORCE=1 -j1 V=s target/linux/compile
