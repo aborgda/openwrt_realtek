@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # GN866 AC legacy build integration
+# GN866 build verification requested 2026-10-06
 ARCH:=mips
 SUBTARGET:=rtl8198c
 CPU_TYPE:=24kc
