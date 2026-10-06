@@ -1,0 +1,54 @@
+name: Build RTL8198C GN866 AC and SK337
+
+on:
+  push:
+    branches: [ kt510-rtl8198 ]
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang flex bison gawk gettext             libncurses-dev libssl-dev python3 python-is-python3 rsync unzip file             wget git zlib1g-dev libelf-dev gcc-11 g++-11
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 110
+      - name: Prepare minimal build
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+      - name: Configure RTL8198C
+        run: |
+          cat > .config <<'EOF'
+          CONFIG_TARGET_realtek=y
+          CONFIG_TARGET_realtek_rtl8198c=y
+          CONFIG_TARGET_BOARD="realtek"
+          CONFIG_TARGET_ARCH_PACKAGES="realtek_24kc"
+          CONFIG_CPU_TYPE="24kc"
+          CONFIG_TARGET_OPTIMIZATION="-Os -pipe -fno-caller-saves -fno-plt -fhonour-copts"
+          CONFIG_PACKAGE_kmod-gpio-button-hotplug=y
+          CONFIG_PACKAGE_swconfig=y
+          EOF
+          make FORCE=1 defconfig
+      - name: Build GN866 AC and SK337 images
+        run: |
+          make FORCE=1 -j1 V=s target/linux/compile
+          make FORCE=1 -j1 V=s target/linux/install
+          make FORCE=1 -j1 V=s target/linux/image/compile
+      - name: Verify images
+        run: |
+          set -eux
+          find bin/targets/realtek/rtl8198c -maxdepth 1 -type f -print
+          test -n "$(find bin/targets/realtek/rtl8198c -maxdepth 1 -type f -name '*gn866*' -o -name '*sk337*' -o -name 'fw.bin' | head -1)"
+          ls -lh bin/targets/realtek/rtl8198c
+      - name: Upload images
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtl8198c-gn866-sk337
+          path: |
+            bin/targets/realtek/rtl8198c/**
+          if-no-files-found: error
