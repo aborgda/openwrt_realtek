@@ -41,9 +41,9 @@ jobs:
 
       - name: Build RTL8198 kernel and image
         run: |
-          make FORCE=1 -j2 target/linux/compile
-          make FORCE=1 -j2 target/linux/install
-          make FORCE=1 -j2 target/linux/image/compile
+          make FORCE=1 -j1 V=s target/linux/compile
+          make FORCE=1 -j1 V=s target/linux/install
+          make FORCE=1 -j1 V=s target/linux/image/compile
 
       - name: Verify KT510 image
         run: |
