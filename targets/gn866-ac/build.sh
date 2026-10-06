@@ -18,11 +18,13 @@ cd sdk
 git fetch --depth 1 origin "$SDK_REF"
 git checkout "$SDK_REF"
 
+# This legacy SDK uses the RTL8198 board directory for the RTL8198C-family
+# vendor tree; keep the exact filenames from the pinned SDK revision.
 test -d "toolchain/$RSDK"
 test -f "boards/rtl8198/Makefile"
 test -f "boards/rtl8198/config.linux-2.6.30.RTL8198_SPI_SQUASHFS"
-test -f "users/boa/tools/cvimg"
-test -f "users/boa/tools/mgbin"
+test -f "users/boa/tools/cvimg.c"
+test -f "users/boa/tools/mgbin.c"
 
 cp .config .config.gn866.base
 python3 - <<'PY'
@@ -45,7 +47,7 @@ for a,b in repl.items():
 if "CONFIG_BOARD_rtl8198=y" not in s: s += "\nCONFIG_BOARD_rtl8198=y\n"
 if "CONFIG_MODEL=RTL8198_SPI_SQUASHFS" not in s: s += "\nCONFIG_MODEL=RTL8198_SPI_SQUASHFS\n"
 if "CONFIG_BOARDDIR=boards/rtl8198" not in s: s += "\nCONFIG_BOARDDIR=boards/rtl8198\n"
-if "CONFIG_RSDKDIR=toolchain/rsdk-1.5.5-5281-EB-2.6.30.9-110714" not in s:
+if "CONFIG_RSDKDIR=toolchain/rsdk-1.5.5-5281-EB-2.6.30-0.9.30.3-110714" not in s:
     s += "\nCONFIG_RSDKDIR=toolchain/rsdk-1.5.5-5281-EB-2.6.30-0.9.30.3-110714\n"
 p.write_text(s)
 PY
