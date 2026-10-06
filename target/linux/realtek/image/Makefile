@@ -352,4 +352,30 @@ endef
 TARGET_DEVICES += rtl8198c_gn866_ac
 endif
 
+
+# KT510 RTL8198 factory layout:
+# 16 MiB SPI-NOR, cr6c kernel at 0x11000, raw hsqs rootfs at 0x411000.
+define Build/kt510-factory
+	python3 $(TOPDIR)/target/linux/realtek/image/kt510-pack.py \
+		$@ $(KDIR)/root.squashfs $@.new
+	mv $@.new $@
+endef
+
+ifeq ($(SUBTARGET),rtl8198)
+define Device/KT510
+  DEVICE_VENDOR := Realtek
+  DEVICE_MODEL := KT510
+  DEVICE_TITLE := KT510 (RTL8198 + RTL8192ER + RTL8812AR)
+  SUPPORTED_DEVICES := kt510
+  DEV_PROFILE := KT510
+  BLOCKSIZE := 64k
+  IMAGE_SIZE := 12220k
+  DEVICE_DTS := rtl8198-kt510
+  KERNEL := kernel-bin | append-dtb | lzma | loader-cmdline-compile
+  IMAGES := factory.bin
+  IMAGE/factory.bin := kt510-factory
+endef
+TARGET_DEVICES += KT510
+endif
+
 $(eval $(call BuildImage))
