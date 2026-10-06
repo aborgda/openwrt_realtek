@@ -1,31 +1,77 @@
+From 69238f15129f35eb4756ad8e2004e0d7907cb175 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Fri, 30 Apr 2021 17:40:36 -0700
+Subject: [PATCH] c-stack: stop using SIGSTKSZ
+
+This patch is required with glibc 2.34+.
+---
+ lib/c-stack.c | 22 +++++++++++++---------
+ 1 file changed, 13 insertions(+), 9 deletions(-)
+
+diff --git a/lib/c-stack.c b/lib/c-stack.c
+index 5353c08..863f764 100644
 --- a/lib/c-stack.c
 +++ b/lib/c-stack.c
-@@ -50,13 +50,16 @@
- #if ! HAVE_STACK_T && ! defined stack_t
+@@ -51,13 +51,14 @@
  typedef struct sigaltstack stack_t;
  #endif
--#ifndef SIGSTKSZ
+ #ifndef SIGSTKSZ
 -# define SIGSTKSZ 16384
 -#elif HAVE_LIBSIGSEGV && SIGSTKSZ < 16384
-+
-+/* SIGSTKSZ may be a run-time expression with glibc 2.34+.  Do not
-+   use it in preprocessor expressions or as a static array bound. */
 +#define get_sigstksz() (16384)
-+#if HAVE_LIBSIGSEGV
++#elif HAVE_LIBSIGSEGV
  /* libsigsegv 2.6 through 2.8 have a bug where some architectures use
     more than the Linux default of an 8k alternate stack when deciding
-    if a fault was caused by stack overflow.  */
+    if a fault was caused by stack overflow. */
 -# undef SIGSTKSZ
 -# define SIGSTKSZ 16384
-+# undef get_sigstksz
-+# define get_sigstksz() ((SIGSTKSZ) < 16384 ? 16384 : (SIGSTKSZ))
++#define get_sigstksz() ((SIGSTKSZ) < 16384 ? 16384 : (SIGSTKSZ))
++#else
++#define get_sigstksz() ((SIGSTKSZ))
  #endif
-@@ -131,7 +134,7 @@
+ 
+ #include <stdlib.h>
+@@ -131,7 +132,8 @@ die (int signo)
  /* Storage for the alternate signal stack. */
  static union
  {
 -  char buffer[SIGSTKSZ];
-+  char buffer[16384];
++  /* allocate buffer with size from get_sigstksz() */
++  char *buffer;
  
-   /* These other members are for proper alignment. */
-   long double ld;
+   /* These other members are for proper alignment. There's no
+      standard way to guarantee stack alignment, but this seems enough
+@@ -203,10 +205,11 @@ c_stack_action (void (*action) (int))
+   program_error_message = _("program error");
+   stack_overflow_message = _("stack overflow");
+ 
++  alternate_signal_stack.buffer = malloc(get_sigstksz());
+   /* Always install the overflow handler. */
+   if (stackoverflow_install_handler (overflow_handler,
+                                      alternate_signal_stack.buffer,
+-                                     sizeof alternate_signal_stack.buffer))
++                                     get_sigstksz()))
+     {
+       errno = ENOTSUP;
+       return -1;
+@@ -279,14 +282,15 @@ c_stack_action (void (*action) (int))
+   stack_t st;
+   struct sigaction act;
+   st.ss_flags = 0;
++  alternate_signal_stack.buffer = malloc(get_sigstksz());
+ # if SIGALTSTACK_SS_REVERSED
+   /* Irix mistakenly treats ss_sp as the upper bound, rather than
+      lower bound, of the alternate stack. */
+-  st.ss_sp = alternate_signal_stack.buffer + SIGSTKSZ - sizeof (void *);
+-  st.ss_size = sizeof alternate_signal_stack.buffer - sizeof (void *);
++  st.ss_sp = alternate_signal_stack.buffer + get_sigstksz() - sizeof (void *);
++  st.ss_size = get_sigstksz() - sizeof (void *);
+ # else
+   st.ss_sp = alternate_signal_stack.buffer;
+-  st.ss_size = sizeof alternate_signal_stack.buffer;
++  st.ss_size = get_sigstksz();
+ # endif
+   r = sigaltstack (&st, NULL);
+   if (r != 0)
+-- 
+2.31.1
