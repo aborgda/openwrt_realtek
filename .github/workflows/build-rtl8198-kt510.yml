@@ -7,7 +7,43 @@ on:
   pull_request:
 
 jobs:
+  host-tools:
+    timeout-minutes: 25
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang flex bison gawk gettext libncurses5-dev libncursesw5-dev libssl-dev python3 python3-distutils rsync unzip file wget git
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100
+      - name: Configure host tools
+        run: |
+          cat > .config <<'EOF'
+          CONFIG_TARGET_realtek=y
+          CONFIG_TARGET_realtek_rtl8198=y
+          CONFIG_TARGET_BOARD="realtek"
+          CONFIG_TARGET_ARCH_PACKAGES="realtek_lx53"
+          CONFIG_CPU_TYPE="lx53"
+          CONFIG_TARGET_OPTIMIZATION="-Os -pipe -fno-caller-saves -fno-plt -fhonour-copts"
+          CONFIG_PACKAGE_kmod-gpio-button-hotplug=y
+          CONFIG_PACKAGE_swconfig=y
+          EOF
+          make FORCE=1 defconfig
+      - name: Build host tools
+        run: make FORCE=1 -j8 V=s tools/install
+      - name: Save OpenWrt host tools
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            staging_dir/host
+            build_dir/host
+          key: rtl8198-host-${{ runner.os }}-${{ hashFiles('tools/Makefile', 'include/version.mk') }}
+
   build-kt510:
+    needs: host-tools
     timeout-minutes: 30
     runs-on: ubuntu-22.04
     env:
