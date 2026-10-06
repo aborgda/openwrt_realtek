@@ -20,11 +20,10 @@ jobs:
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100
 
-      - name: Prepare feeds
+      - name: Prepare minimal build
         run: |
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
-
+          rm -rf feeds
+          mkdir -p feeds
       - name: Configure KT510
         run: |
           cat > .config <<'EOF'
