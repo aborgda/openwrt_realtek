@@ -41,6 +41,8 @@ jobs:
 
       - name: Build RTL8198 kernel and image
         run: |
+          make FORCE=1 -j2 V=s tools/install
+          make FORCE=1 -j2 V=s toolchain/install
           make FORCE=1 -j1 V=s target/linux/compile
           make FORCE=1 -j1 V=s target/linux/install
           make FORCE=1 -j1 V=s target/linux/image/compile
