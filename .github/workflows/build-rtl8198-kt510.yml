@@ -17,6 +17,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential clang flex bison gawk gettext             libncurses5-dev libncursesw5-dev libssl-dev python3 python3-distutils             rsync unzip file wget git
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100
 
       - name: Prepare feeds
         run: |
@@ -35,7 +37,7 @@ jobs:
           CONFIG_PACKAGE_kmod-gpio-button-hotplug=y
           CONFIG_PACKAGE_swconfig=y
           EOF
-          make defconfig
+          FORCE=1 make defconfig
           grep -E '^(CONFIG_TARGET_realtek|CONFIG_TARGET_realtek_rtl8198|CONFIG_CPU_TYPE|CONFIG_TARGET_ARCH_PACKAGES|CONFIG_SOC_RTL8198)=' .config
 
       - name: Build RTL8198 kernel and image
