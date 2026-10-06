@@ -25,14 +25,17 @@ jobs:
           test -s rtl819x-sdk.tar.gz
           tar -tzf rtl819x-sdk.tar.gz >/dev/null
           mkdir sdk
-          tar -xzf rtl819x-sdk.tar.gz -C sdk --strip-components=1
-          test -f sdk/Makefile
+          tar -xzf rtl819x-sdk.tar.gz -C sdk
+          SDK_ROOT="$(find sdk -maxdepth 4 -type f -name Makefile -print | head -1 | xargs -r dirname)"
+          test -n "$SDK_ROOT"
+          test -f "$SDK_ROOT/Makefile"
+          echo "SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
 
       - name: Inspect RTL8198 SDK targets
         shell: bash
         run: |
           set -euxo pipefail
-          cd sdk
+          cd "$GITHUB_WORKSPACE/$SDK_ROOT"
           export TERM=xterm
           echo "Available RTL8198 config targets:"
           make help 2>/dev/null | grep -i '8198' || true
@@ -76,10 +79,10 @@ jobs:
         with:
           name: kt510-rtl8198-vendor-build
           path: |
-            sdk/bin/**
-            sdk/images/**
-            sdk/target/**/image/**
-            sdk/*.log
+            ${{ env.SDK_ROOT }}/bin/**
+            ${{ env.SDK_ROOT }}/images/**
+            ${{ env.SDK_ROOT }}/target/**/image/**
+            ${{ env.SDK_ROOT }}/*.log
             rtl8198-config-files.txt
             kt510-sdk.config
           if-no-files-found: warn
