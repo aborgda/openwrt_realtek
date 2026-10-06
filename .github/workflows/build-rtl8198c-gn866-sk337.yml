@@ -34,6 +34,10 @@ jobs:
           CONFIG_PACKAGE_swconfig=y
           EOF
           make FORCE=1 defconfig
+      - name: Build host tools and target toolchain
+        run: |
+          make FORCE=1 -j1 V=s tools/compile
+          make FORCE=1 -j1 V=s toolchain/compile
       - name: Build GN866 AC and SK337 images
         run: |
           make FORCE=1 -j1 V=s target/linux/compile
