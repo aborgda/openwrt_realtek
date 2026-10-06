@@ -36,6 +36,8 @@ jobs:
           make FORCE=1 defconfig
       - name: Build GN866 AC and SK337 images
         run: |
+          mkdir -p dl
+          wget -q -O dl/linux-3.10.24.tar.xz https://cdn.kernel.org/pub/linux/kernel/v3.x/linux-3.10.24.tar.xz
           make FORCE=1 -j1 V=s target/linux/compile
           make FORCE=1 -j1 V=s target/linux/install
           make FORCE=1 -j1 V=s target/linux/image/compile
