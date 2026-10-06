@@ -41,6 +41,9 @@ jobs:
 
       - name: Build RTL8198 kernel and image
         run: |
+          mkdir -p staging_dir/host/bin build_dir/host/m4-1.4.18
+          ln -sf /usr/bin/m4 staging_dir/host/bin/m4
+          touch build_dir/host/m4-1.4.18/.built
           make FORCE=1 -j2 V=s tools/install
           make FORCE=1 -j2 V=s toolchain/install
           make FORCE=1 -j1 V=s target/linux/compile
