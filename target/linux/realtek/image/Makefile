@@ -363,6 +363,7 @@ endef
 
 ifeq ($(SUBTARGET),rtl8198)
 define Device/KT510
+  $(Device/RealtekDTS)
   DEVICE_VENDOR := Realtek
   DEVICE_MODEL := KT510
   DEVICE_TITLE := KT510 (RTL8198 + RTL8192ER + RTL8812AR)
