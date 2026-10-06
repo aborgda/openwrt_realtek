@@ -28,7 +28,7 @@ jobs:
           CONFIG_TARGET_realtek_rtl8198c=y
           CONFIG_TARGET_BOARD="realtek"
           CONFIG_TARGET_ARCH_PACKAGES="realtek_24kc"
-          CONFIG_CPU_TYPE="24kc"
+          CONFIG_CPU_TYPE="lx53"
           CONFIG_TARGET_OPTIMIZATION="-Os -pipe -fno-caller-saves -fno-plt -fhonour-copts"
           CONFIG_PACKAGE_kmod-gpio-button-hotplug=y
           CONFIG_PACKAGE_swconfig=y
@@ -36,9 +36,6 @@ jobs:
           make FORCE=1 defconfig
       - name: Build GN866 AC and SK337 images
         run: |
-          mkdir -p dl
-          wget -q -O dl/linux-3.10.24.tar.xz https://cdn.kernel.org/pub/linux/kernel/v3.x/linux-3.10.24.tar.xz
-          sha256sum dl/linux-3.10.24.tar.xz
           make FORCE=1 -j1 V=s target/linux/compile
           make FORCE=1 -j1 V=s target/linux/install
           make FORCE=1 -j1 V=s target/linux/image/compile
