@@ -1,0 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0
+/dts-v1/;
+#include "rtl819x.dtsi"
+/ {
+	model = "SK337 (RTL8198C + RTL8192E + RTL8812AR)";
+	compatible = "realtek,rtl8198c-sk337", "realtek,rtl819x-soc";
+	memory@0 { device_type = "memory"; reg = <0x00000000 0x08000000>; };
+	chosen { bootargs = "console=ttyS0,115200"; };
+};

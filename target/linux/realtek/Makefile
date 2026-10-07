@@ -2,14 +2,13 @@
 # Copyright (C) 2008-2011 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
 #
 include $(TOPDIR)/rules.mk
 
 ARCH:=mips
 BOARD:=realtek
 BOARDNAME:=Realtek
-SUBTARGETS:=rtl8197d rtl8196e rtl8197f
+SUBTARGETS:=rtl8197d rtl8196e rtl8197f rtl8198 rtl8198c
 FEATURES:=squashfs gpio
 MAINTAINER:=Anlix <contato@anlix.io>
 

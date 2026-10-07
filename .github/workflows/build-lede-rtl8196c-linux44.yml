@@ -1,0 +1,150 @@
+name: Build RTL8198C GN866 SK337 Linux 4.4 reference
+
+on:
+  push:
+    branches: [ kt510-rtl8198 ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone Linux 4.4 Realtek reference
+        run: |
+          git clone --depth 1 --branch realtek https://github.com/hackpascal/lede-rtl8196c.git lede-rtl8196c
+          cd lede-rtl8196c
+          git rev-parse HEAD
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc-11 g++-11 flex bison gawk gettext             libncurses-dev libssl-dev python3 python-is-python3 rsync unzip file             wget git zlib1g-dev libelf-dev patch bc cpio
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 110
+
+      - name: Add GN866 AC and SK337 targets
+        working-directory: lede-rtl8196c
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("target/linux/realtek/files/arch/mips/realtek/Kconfig")
+          s=p.read_text()
+          marker='config REALTEK_MACH_AU_HOME_SPOT_CUBE'
+          insert='''config REALTEK_MACH_GN866_AC
+            bool "GN866 AC board"
+
+          config REALTEK_MACH_SK337
+            bool "SK337 board"
+
+          '''
+          if 'REALTEK_MACH_GN866_AC' not in s:
+              s=s.replace(marker, insert+marker)
+          p.write_text(s)
+
+          p=Path("target/linux/realtek/files/arch/mips/realtek/setup.c")
+          s=p.read_text()
+          old='''	case SOC_ID_RTL8196C_REV_B:
+		rtl_soc = RTL_SOC_8196C_REV_B;
+		chip = "8196C rev B";
+		break;
+'''
+          new=old
+          if 'GN866/SK337' not in s:
+              new += '''\n\t/* GN866/SK337 are selected as generic legacy boards for build validation. */\n'''
+          s=s.replace(old,new)
+          p.write_text(s)
+
+          p=Path("target/linux/realtek/image/Makefile")
+          s=p.read_text()
+          add=r'''
+          define Device/GN866_AC
+            $(Device/Default)
+            DEVICE_TITLE := GN866 AC
+            BOARDNAME := GN866_AC
+            CVIMG_KERNEL_BURN_ADDR := 0x30000
+            CVIMG_LOADER_START_ADDR := 0x80A00000
+            CVIMG_CPU_TYPE := new
+            BLOCKSIZE := 64k
+            IMAGES := factory.bin sysupgrade.bin
+            IMAGE/factory.bin = append-kernel | append-fake-rootfs | append-rootfs | cvimg-fw | cvimg-pad-rootfs
+            IMAGE/sysupgrade.bin = append-kernel | append-fake-rootfs | append-rootfs | cvimg-fw | pad-rootfs
+          endef
+          TARGET_DEVICES += GN866_AC
+
+          define Device/SK337
+            $(Device/Default)
+            DEVICE_TITLE := SK337
+            BOARDNAME := SK337
+            CVIMG_KERNEL_BURN_ADDR := 0x31000
+            CVIMG_LOADER_START_ADDR := 0x81000000
+            CVIMG_CPU_TYPE := new
+            BLOCKSIZE := 64k
+            IMAGES := factory.bin sysupgrade.bin
+            IMAGE/factory.bin = append-kernel | append-fake-rootfs | append-rootfs | cvimg-fw | cvimg-pad-rootfs
+            IMAGE/sysupgrade.bin = append-kernel | append-fake-rootfs | append-rootfs | cvimg-fw | pad-rootfs
+          endef
+          TARGET_DEVICES += SK337
+          '''
+          if 'define Device/GN866_AC' not in s:
+              s=s.replace('\n\ndefine Image/Build/Initramfs', '\n'+add+'\n\ndefine Image/Build/Initramfs')
+          p.write_text(s)
+
+          mkdir -p package/base-files/files/etc/uci-defaults
+          cat > package/base-files/files/etc/uci-defaults/99-realtek-wlan <<'EOF'
+          #!/bin/sh
+          [ -x /sbin/uci ] || exit 0
+          for radio in $(uci show wireless 2>/dev/null | sed -n 's/^wireless\.(@wifi-device\[[0-9][0-9]*\])\.disabled=.*/\1/p' | sort -u); do
+              uci set wireless.$radio.disabled='0'
+          done
+          for iface in $(uci show wireless 2>/dev/null | sed -n 's/^wireless\.(@wifi-iface\[[0-9][0-9]*\])\.disabled=.*/\1/p' | sort -u); do
+              uci set wireless.$iface.disabled='0'
+          done
+          uci commit wireless
+          exit 0
+          EOF
+          chmod +x package/base-files/files/etc/uci-defaults/99-realtek-wlan
+
+      - name: Configure Linux 4.4 build
+        working-directory: lede-rtl8196c
+        run: |
+          cat > .config <<'EOF'
+          CONFIG_TARGET_realtek=y
+          CONFIG_TARGET_realtek_lexra=y
+          CONFIG_TARGET_BOARD="realtek"
+          CONFIG_TARGET_ARCH_PACKAGES="realtek_lexra"
+          CONFIG_CPU_TYPE="lexra"
+          CONFIG_USE_UCLIBC=y
+          CONFIG_REALTEK=y
+          CONFIG_REALTEK_MACH_GENERIC=y
+          CONFIG_REALTEK_MACH_GN866_AC=y
+          CONFIG_REALTEK_MACH_SK337=y
+          CONFIG_TARGET_ROOTFS_SQUASHFS=y
+          CONFIG_PACKAGE_kmod-gpio-button-hotplug=y
+          CONFIG_PACKAGE_swconfig=y
+          EOF
+          make FORCE=1 defconfig
+
+      - name: Build Linux 4.4 target
+        working-directory: lede-rtl8196c
+        run: |
+          make FORCE=1 -j1 V=s tools/compile
+          make FORCE=1 -j1 V=s toolchain/compile
+          make FORCE=1 -j1 V=s target/linux/compile
+          make FORCE=1 -j1 V=s target/linux/install
+          make FORCE=1 -j1 V=s target/linux/image/compile
+
+      - name: Verify images
+        working-directory: lede-rtl8196c
+        run: |
+          set -eux
+          find bin -type f -maxdepth 4 -print
+          test -n "$(find bin -type f \( -name '*GN866*' -o -name '*SK337*' -o -name 'factory.bin' -o -name 'sysupgrade.bin' \) | head -1)"
+
+      - name: Upload images
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtl8198c-linux44-gn866-sk337
+          path: lede-rtl8196c/bin/**
+          if-no-files-found: error

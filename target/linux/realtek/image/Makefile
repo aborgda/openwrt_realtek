@@ -332,4 +332,74 @@ define Image/Build/Initramfs
         $(call Image/Build/Profile/$(PROFILE),initramfs)
 endef
 
+
+# Legacy RTL8198C CR6C/R6CR firmware container.
+define Build/rtk-cr6c
+	$(TOPDIR)/target/linux/realtek/image/rtk-cr6c.py \
+		$@ $(KDIR)/root.squashfs $@.new
+	mv $@.new $@
+endef
+
+ifeq ($(SUBTARGET),rtl8198c)
+
+define Device/RTL8198C_LEGACY
+  $(Device/RealtekDTS)
+  BLOCKSIZE := 64k
+  KERNEL := kernel-bin | append-dtb | lzma
+  CVIMG_LOADER_START_ADDR := 0x80A00000
+  IMAGES := fw.bin
+  IMAGE/fw.bin := append-kernel | rtk-cr6c
+endef
+
+define Device/GN866_AC
+  $(Device/RTL8198C_LEGACY)
+  DEVICE_DTS := rtl8198c-gn866-ac
+  DEVICE_TITLE := GN866 AC (RTL8198C + RTL8192ER + RTL8812BRH)
+  SUPPORTED_DEVICES := gn866-ac
+  DEV_PROFILE := GN866_AC
+  IMAGE_SIZE := 15872k
+endef
+TARGET_DEVICES += GN866_AC
+
+define Device/SK337
+  $(Device/RTL8198C_LEGACY)
+  DEVICE_DTS := rtl8198c-sk337
+  DEVICE_TITLE := SK337 (RTL8198C + RTL8192E + RTL8812AR)
+  SUPPORTED_DEVICES := sk337
+  DEV_PROFILE := SK337
+  IMAGE_SIZE := 32256k
+endef
+TARGET_DEVICES += SK337
+
+define Device/rtl8198c_gn866_ac
+  $(Device/GN866_AC)
+endef
+TARGET_DEVICES += rtl8198c_gn866_ac
+endif
+
+# KT510 RTL8198 factory layout:# KT510 RTL8198 factory layout:
+# 16 MiB SPI-NOR, cr6c kernel at 0x11000, raw hsqs rootfs at 0x411000.
+define Build/kt510-factory
+	python3 $(TOPDIR)/target/linux/realtek/image/kt510-pack.py \
+		$@ $(KDIR)/root.squashfs $@.new
+	mv $@.new $@
+endef
+
+ifeq ($(SUBTARGET),rtl8198)
+define Device/KT510
+  DEVICE_VENDOR := Realtek
+  DEVICE_MODEL := KT510
+  DEVICE_TITLE := KT510 (RTL8198 + RTL8192ER + RTL8812AR)
+  SUPPORTED_DEVICES := kt510
+  DEV_PROFILE := KT510
+  BLOCKSIZE := 64k
+  IMAGE_SIZE := 12220k
+  DEVICE_DTS := rtl8198-kt510
+  KERNEL := kernel-bin | append-dtb | lzma | loader-cmdline-compile
+  IMAGES := factory.bin
+  IMAGE/factory.bin := kt510-factory
+endef
+TARGET_DEVICES += KT510
+endif
+
 $(eval $(call BuildImage))

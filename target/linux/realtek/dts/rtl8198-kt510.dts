@@ -1,0 +1,46 @@
+// SPDX-License-Identifier: GPL-2.0
+/dts-v1/;
+
+#include "rtl819x.dtsi"
+
+/ {
+	model = "KT510 (RTL8198 + RTL8192ER + RTL8812AR)";
+	compatible = "realtek,rtl8198-kt510", "realtek,rtl819x-soc";
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x00000000 0x08000000>;
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,115200";
+	};
+
+	soc {
+		gpio0: gpio-controller@3500 {
+			status = "okay";
+		};
+
+		gpio1: gpio-controller@351c {
+			status = "okay";
+		};
+
+		spi0: spi@1200 {
+			status = "okay";
+
+			flash@0 {
+				compatible = "jedec,spi-nor";
+				reg = <0>;
+				spi-max-frequency = <25000000>;
+			};
+		};
+
+		pcie0: pcie-controller@18b00000 {
+			status = "okay";
+		};
+
+		pcie1: pcie-controller@18b20000 {
+			status = "okay";
+		};
+	};
+};

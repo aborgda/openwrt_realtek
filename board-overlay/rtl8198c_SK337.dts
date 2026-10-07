@@ -1,0 +1,146 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+#include "rtl8198c.dtsi"
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+	compatible = "realtek,rtl8198c-soc";
+	model = "SK337";
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x08000000>;
+	};
+
+	chosen { bootargs = "console=ttyS0,115200"; };
+
+	refclk: refclk {
+		#clock-cells = <0>;
+		clock-frequency = <25000000>;
+		compatible = "fixed-clock";
+	};
+
+	pcie0: pcie@18b00000 {
+		#address-cells = <3>;
+		#size-cells = <2>;
+		bus-range = <0 255>;
+		compatible = "realtek,rtl819x-pci";
+		device_type = "pci";
+		interrupt-parent = <&gic>;
+		interrupts = <GIC_SHARED 31 IRQ_TYPE_LEVEL_HIGH>;
+		ranges = <0x02000000 0 0 0x19000000 0 0x01000000
+			  0x01000000 0 0 0x18c00000 0 0x00200000>;
+		reg = <0x18b00000 0x1000 0x18b01000 0x1000
+			0x18b10000 0x1000 0x18b11000 0x1000>;
+		reg-names = "rc_cfg", "rc_ext", "dev_cfg0", "dev_cfg1";
+		slot-num = <0>;
+	};
+
+	pcie1: pcie@18b20000 {
+		#address-cells = <3>;
+		#size-cells = <2>;
+		bus-range = <0 255>;
+		compatible = "realtek,rtl819x-pci";
+		device_type = "pci";
+		interrupt-parent = <&gic>;
+		interrupts = <GIC_SHARED 32 IRQ_TYPE_LEVEL_HIGH>;
+		ranges = <0x02000000 0 0 0x1a000000 0 0x01000000
+			  0x01000000 0 0 0x18e00000 0 0x00200000>;
+		reg = <0x18b20000 0x1000 0x18b21000 0x1000
+			0x18b30000 0x1000 0x18b31000 0x1000>;
+		reg-names = "rc_cfg", "rc_ext", "dev_cfg0", "dev_cfg1";
+		slot-num = <1>;
+	};
+
+	soc {
+		gpio0: gpio@3500 {
+			#gpio-cells = <2>;
+			#interrupt-cells = <2>;
+			compatible = "realtek,rtl819x-gpio";
+			gpio-controller;
+			interrupt-parent = <&gic>;
+			interrupts = <GIC_SHARED 26 IRQ_TYPE_LEVEL_HIGH>,
+					 <GIC_SHARED 27 IRQ_TYPE_LEVEL_HIGH>;
+			reg = <0x3500 0x100>;
+		};
+
+		memory-controller@1000 {
+			compatible = "realtek,rtl819x-memc";
+			reg = <0x1000 0x100>;
+		};
+
+		spi@1200 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "realtek,rtl819x-nor";
+			interrupt-parent = <&gic>;
+			interrupts = <GIC_SHARED 41 IRQ_TYPE_LEVEL_HIGH>;
+			num-cs = <2>;
+			reg = <0x1200 0x100>;
+			status = "okay";
+			flash@0 {
+				compatible = "jedec,spi-nor";
+				reg = <0>;
+				spi-max-frequency = <50000000>;
+				partitions {
+					compatible = "fixed-partitions";
+					#address-cells = <1>;
+					#size-cells = <1>;
+					partition@0 { label = "boot"; reg = <0x0 0x40000>; };
+					partition@20000 { label = "hwpart"; reg = <0x20000 0x20000>; };
+					partition@40000 { label = "nvram"; reg = <0x40000 0x20000>; };
+					partition@800000 { label = "firmware"; reg = <0x800000 0x01fe0000>; };
+				};
+			};
+		};
+
+		eth@18010000 {
+			compatible = "realtek,rtl819x-eth";
+			interrupt-parent = <&gic>;
+			interrupts = <GIC_SHARED 25 IRQ_TYPE_LEVEL_HIGH>;
+			reg = <0x18010000 0x100>;
+			status = "okay";
+		};
+
+		watchdog@3100 {
+			compatible = "realtek,rtl819x-wdt";
+			reg = <0x3100 0x20>;
+		};
+
+		xhci@18040000 {
+			compatible = "realtek,rtl819x-xhci";
+			interrupt-parent = <&gic>;
+			interrupts = <GIC_SHARED 34 IRQ_TYPE_LEVEL_HIGH>;
+			reg = <0x18040000 0x10000>;
+			status = "okay";
+		};
+	};
+
+	wmac {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "realtek,rtl819x-wmac";
+		ranges = <0 0 0x20000000>;
+
+		wmac0 {
+			compatible = "realtek,rtl819x-wmac";
+			init-mode = <1>;
+			interrupt-parent = <&gic>;
+			interrupts = <GIC_SHARED 32 IRQ_TYPE_LEVEL_HIGH>;
+			reg = <0x18b30000 0x1000 0x1a000000 0x1000>;
+			ext-lna;
+			ext-pa;
+			status = "okay";
+		};
+
+		wmac1 {
+			compatible = "realtek,rtl819x-wmac";
+			init-mode = <1>;
+			interrupt-parent = <&gic>;
+			interrupts = <GIC_SHARED 31 IRQ_TYPE_LEVEL_HIGH>;
+			reg = <0x18b10000 0x1000 0x19000000 0x1000>;
+			ext-pa;
+			status = "okay";
+		};
+	};
+};

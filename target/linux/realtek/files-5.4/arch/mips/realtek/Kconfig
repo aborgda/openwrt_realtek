@@ -39,6 +39,16 @@ choice
 		select CEVT_R4K
 		select CSRC_R4K
 
+	config SOC_RTL8198
+		bool "RTL8198"
+		select USE_GENERIC_EARLY_PRINTK_8250
+		select SYS_SUPPORTS_BIG_ENDIAN
+		select SYS_HAS_CPU_RLX5281
+		select HW_HAS_PCI
+		select GPIOLIB
+		select GPIO_GENERIC
+		select GPIOLIB_IRQCHIP
+
 endchoice
 
 choice
@@ -63,6 +73,11 @@ choice
 	config DTB_RTL8197F_GEN
 		bool "RTL8197F generic"
 		depends on SOC_RTL8197F
+		select BUILTIN_DTB
+
+	config DTB_RTL8198_KT510
+		bool "RTL8198 KT510"
+		depends on SOC_RTL8198
 		select BUILTIN_DTB
 
 endchoice

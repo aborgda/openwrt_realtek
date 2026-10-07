@@ -1,0 +1,16 @@
+#!/bin/sh
+# Enable both PCIe radios and bring up open APs on first boot.
+[ -x /sbin/uci ] || exit 0
+
+uci -q set wireless.radio0.disabled='0'
+uci -q set wireless.radio1.disabled='0'
+uci -q set wireless.default_radio0.mode='ap'
+uci -q set wireless.default_radio1.mode='ap'
+uci -q set wireless.default_radio0.encryption='none'
+uci -q set wireless.default_radio1.encryption='none'
+uci -q delete wireless.default_radio0.key
+uci -q delete wireless.default_radio1.key
+uci -q commit wireless
+
+[ -x /sbin/wifi ] && /sbin/wifi up
+exit 0
